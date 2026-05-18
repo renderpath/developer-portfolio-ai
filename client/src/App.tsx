@@ -1,7 +1,9 @@
+import { Hero } from './widgets/hero';
+
 function App() {
     return (
         <main>
-            <h1>Developer Portfolio AI</h1>
+            <Hero />
         </main>
     );
 }
