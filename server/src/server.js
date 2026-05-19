@@ -1,7 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 
 dotenv.config();
 
@@ -13,23 +13,21 @@ app.use(cors({
         'https://developer-portfolio-ai.vercel.app',
     ],
 }));
+
 app.use(express.json());
 
-const transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: Number(process.env.SMTP_PORT),
-    secure: Number(process.env.SMTP_PORT) === 465,
-    connectionTimeout: 10000,
-    greetingTimeout: 10000,
-    socketTimeout: 10000,
-    auth: {
-        user: process.env.SMTP_EMAIL,
-        pass: process.env.SMTP_PASSWORD,
-    },
-});
+const resend = new Resend(process.env.RESEND_API_KEY);
+
 app.get('/', (req, res) => {
     res.json({
         message: 'API is working',
+    });
+});
+
+app.get('/ai-summary', (req, res) => {
+    res.json({
+        summary:
+            'Vera is a frontend developer with experience in React, TypeScript, API integration and clean UI architecture. She uses AI tools to speed up prototyping, improve code structure, generate documentation and validate technical decisions.',
     });
 });
 
@@ -43,27 +41,32 @@ app.post('/contact', async (req, res) => {
             });
         }
 
-        await transporter.sendMail({
-            from: process.env.SMTP_EMAIL,
-            to: process.env.SMTP_EMAIL,
+        await resend.emails.send({
+            from: 'Portfolio <onboarding@resend.dev>',
+            to: process.env.OWNER_EMAIL,
             subject: 'New portfolio request',
             html: `
-        <h2>New request from portfolio</h2>
-        <p><strong>Name:</strong> ${name}</p>
-        <p><strong>Phone:</strong> ${phone}</p>
-        <p><strong>Email:</strong> ${email}</p>
-        <p><strong>Comment:</strong> ${comment}</p>
-      `,
+                <h2>New request from portfolio</h2>
+
+                <p><strong>Name:</strong> ${name}</p>
+
+                <p><strong>Phone:</strong> ${phone}</p>
+
+                <p><strong>Email:</strong> ${email}</p>
+
+                <p><strong>Comment:</strong> ${comment}</p>
+            `,
         });
 
-        await transporter.sendMail({
-            from: process.env.SMTP_EMAIL,
+        await resend.emails.send({
+            from: 'Portfolio <onboarding@resend.dev>',
             to: email,
             subject: 'Your message was received',
             html: `
-        <h2>Thank you for contacting me!</h2>
-        <p>I received your request and will contact you soon.</p>
-      `,
+                <h2>Thank you for contacting me!</h2>
+
+                <p>I received your request and will contact you soon.</p>
+            `,
         });
 
         return res.status(200).json({
@@ -78,19 +81,8 @@ app.post('/contact', async (req, res) => {
     }
 });
 
-app.get('/ai-summary', (req, res) => {
-    res.json({
-        summary:
-            'Vera is a frontend developer with experience in React, TypeScript, API integration and clean UI architecture. She uses AI tools to speed up prototyping, improve code structure, generate documentation and validate technical decisions.',
-    });
-});
-
 const PORT = process.env.PORT || 5001;
 
-const server = app.listen(PORT, () => {
+app.listen(PORT, () => {
     console.log(`Server started on port ${PORT}`);
-});
-
-server.on('error', (error) => {
-    console.error('SERVER ERROR:', error);
 });
