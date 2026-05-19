@@ -71,6 +71,13 @@ app.post('/contact', async (req, res) => {
     }
 });
 
+app.get('/ai-summary', (req, res) => {
+    res.json({
+        summary:
+            'Vera is a frontend developer with experience in React, TypeScript, API integration and clean UI architecture. She uses AI tools to speed up prototyping, improve code structure, generate documentation and validate technical decisions.',
+    });
+});
+
 const PORT = process.env.PORT || 5001;
 
 const server = app.listen(PORT, () => {
